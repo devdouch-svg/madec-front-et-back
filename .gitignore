@@ -46,3 +46,7 @@ Untitled
 
 # Local tooling
 .tools/
+**/tools/*.exe
+*.err
+uvicorn*.log
+uvicorn*.err

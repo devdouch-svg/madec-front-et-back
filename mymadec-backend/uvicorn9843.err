@@ -1,7 +1,0 @@
-REDIS_URL not set — rate limiter using in-memory storage (single-worker only)
-INFO:     Started server process [43060]
-INFO:     Waiting for application startup.
-INFO  [alembic.runtime.migration] Context impl MSSQLImpl.
-INFO  [alembic.runtime.migration] Will assume transactional DDL.
-INFO  [mymadec.seed_demo] Demo data already present — skipping
-INFO  [mymadec.init_db] Database seeded successfully
