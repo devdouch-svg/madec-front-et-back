@@ -1,0 +1,74 @@
+# Production compose — API connects to SQL Server on a shared Docker network.
+#
+# Prerequisites on the VPS:
+#   1. MSSQL stack running (see docker/mssql-stack.yml) on network "madec-net"
+#   2. Service hostname "mssql" reachable from this container
+#   3. .env with DB_PASSWORD matching SA_PASSWORD on the MSSQL stack
+#
+# If your MSSQL stack uses another network name (e.g. my-madec-mssql_default),
+# set MSSQL_DOCKER_NETWORK in .env before `docker compose up`.
+
+services:
+  api:
+    build: .
+    container_name: backend-api-1
+    restart: always
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      DB_HOST: mssql
+      DB_PORT: "1433"
+      SKIP_DB_WAIT: "1"
+      LOG_TO_FILE: "false"
+      # Shared rate-limit storage (works across workers). Overrides any .env value.
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - mssql-net
+      - redis-net
+    volumes:
+      - uploads_data:/app/uploads
+    entrypoint: ["/bin/sh", "/app/scripts/docker-entrypoint.sh"]
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --workers ${UVICORN_WORKERS:-1}
+        --log-level info
+        --access-log
+        --proxy-headers
+        --forwarded-allow-ips='*'
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 90s
+
+  redis:
+    image: redis:7-alpine
+    container_name: backend-redis-1
+    restart: always
+    command: ["redis-server", "--save", "60", "1", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    networks:
+      - redis-net
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+networks:
+  mssql-net:
+    external: true
+    name: ${MSSQL_DOCKER_NETWORK:-madec-net}
+  redis-net:
+    driver: bridge
+
+volumes:
+  uploads_data:
+  redis_data:

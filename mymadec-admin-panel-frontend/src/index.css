@@ -1,0 +1,869 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* MADEC v2 — Minia (Themesbrand) design system
+       source: my-madec-frontend-test-v2-UI/Admin/src/assets/scss */
+    --madec-primary: #5156be;
+    --madec-primary-light: #7478cb;
+    --madec-primary-mid: #6266c9;
+    --madec-primary-tint: #eef0fa;
+    --madec-active-tint: #f3f4fb;
+    --madec-selected-tint: #e5e6f6;
+    --madec-border: #e9e9ef;
+    --madec-text: #313533;
+    --madec-text-secondary: #545a6d;
+    --madec-text-muted: #74788d;
+    --madec-placeholder: #74788d;
+    --madec-danger: #fd625e;
+    --madec-danger-tint: #ffe0df;
+    --madec-success: #2ab57d;
+    --madec-success-tint: #d4f0e5;
+    --madec-warning: #ffbf53;
+    --madec-warning-tint: #fff2dd;
+    --madec-info: #4ba6ef;
+    --madec-info-tint: #dbedfc;
+    --madec-promo: #ffe0df;
+    --madec-disabled-bg: #e9e9ef;
+    --madec-disabled-text: #74788d;
+    /* Minia: $border-radius .25rem / -lg .4rem */
+    --madec-radius: 0.25rem;
+    --madec-radius-card: 0.25rem;
+    --madec-radius-lg: 0.4rem;
+    --madec-control-h: 2.5rem;
+
+    /* Minia structure */
+    --madec-sidebar-bg: #fbfaff;
+    --madec-sidebar-item: #545a6d;
+    --madec-sidebar-item-active: #5156be;
+    --madec-header-height: 70px;
+    --madec-card-shadow: rgba(116, 120, 141, 0.1) 0px 5px 20px -6px;
+
+    --brand: var(--madec-primary);
+    --brand-light: var(--madec-primary-tint);
+    --surface: #f8f9fa;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    @apply text-madec-text;
+    background-color: #ffffff;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-primary);
+  }
+}
+
+@layer components {
+  /* ── Buttons (Minia / Bootstrap) ─────────────────────────────────────────── */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium transition-colors;
+    min-height: var(--madec-control-h);
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    border-radius: var(--madec-radius);
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-madec-primary/30 focus-visible:ring-offset-1;
+  }
+
+  .btn:disabled,
+  .btn[disabled] {
+    @apply cursor-not-allowed opacity-100;
+    background-color: var(--madec-disabled-bg);
+    color: var(--madec-disabled-text);
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .btn-primary {
+    @apply btn border border-transparent text-white;
+    background-color: var(--madec-primary);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: #4549a2;
+  }
+
+  .btn-primary:disabled,
+  .btn-primary[disabled] {
+    background-color: var(--madec-disabled-bg);
+    color: var(--madec-disabled-text);
+  }
+
+  .btn-secondary {
+    @apply btn bg-white;
+    color: var(--madec-primary);
+    border: 1px solid var(--madec-primary);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--madec-primary);
+    color: #fff;
+  }
+
+  .btn-secondary:disabled,
+  .btn-secondary[disabled] {
+    background-color: var(--madec-disabled-bg);
+    color: var(--madec-disabled-text);
+    border-color: transparent;
+  }
+
+  .btn-tertiary {
+    @apply btn bg-white;
+    color: var(--madec-text);
+    border: 1px solid var(--madec-border);
+    font-size: 0.875rem;
+  }
+
+  .btn-tertiary:hover:not(:disabled) {
+    background-color: var(--madec-active-tint);
+    border-color: var(--madec-primary);
+    color: var(--madec-primary);
+  }
+
+  .btn-danger {
+    @apply btn border border-transparent text-white;
+    background-color: var(--madec-danger);
+  }
+
+  .btn-danger:hover:not(:disabled) {
+    background-color: #e4504c;
+  }
+
+  .btn-sm {
+    min-height: 2rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+  }
+
+  .btn-icon {
+    @apply inline-flex items-center justify-center rounded p-2 transition-colors;
+    color: var(--madec-text-secondary);
+  }
+
+  .btn-icon:hover {
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-primary);
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────────────────────── */
+  .input {
+    @apply block w-full bg-white text-sm text-madec-text transition-colors;
+    min-height: var(--madec-control-h);
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--madec-radius);
+    border: 1px solid #ced4da;
+  }
+
+  .input::placeholder {
+    color: var(--madec-placeholder);
+    font-weight: 400;
+  }
+
+  .input:hover:not(:disabled):not(:focus) {
+    border-color: #adb5bd;
+  }
+
+  .input:focus {
+    outline: none;
+    border-color: var(--madec-primary);
+    box-shadow: 0 0 0 3px rgb(81 86 190 / 0.15);
+  }
+
+  .input:disabled {
+    @apply cursor-not-allowed;
+    background-color: var(--surface);
+    color: var(--madec-text-muted);
+  }
+
+  select.input {
+    @apply cursor-pointer pr-9;
+  }
+
+  textarea.input {
+    @apply resize-y min-h-[4rem];
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-madec-text;
+  }
+
+  /* ── Typography ──────────────────────────────────────────────────────────── */
+  .page-title {
+    @apply text-base font-semibold uppercase tracking-wide text-madec-text;
+  }
+
+  .page-subtitle {
+    @apply mt-0.5 text-sm normal-case tracking-normal text-madec-muted;
+  }
+
+  .page-hero {
+    @apply card relative overflow-hidden !p-0;
+  }
+
+  .page-hero-bg {
+    @apply pointer-events-none absolute -right-10 -top-10 h-36 w-36 rounded-full opacity-60 blur-2xl;
+    background: var(--madec-primary-light);
+  }
+
+  .page-hero-inner {
+    @apply relative flex flex-wrap items-start justify-between gap-4 p-5 md:p-6;
+    background: linear-gradient(135deg, #ffffff 0%, var(--madec-primary-tint) 72%, var(--madec-active-tint) 100%);
+  }
+
+  .page-hero-title {
+    @apply text-2xl font-bold tracking-tight text-madec-text;
+  }
+
+  .page-hero-subtitle {
+    @apply mt-1.5 max-w-2xl text-sm leading-relaxed text-madec-secondary;
+  }
+
+  .page-hero-icon {
+    @apply mb-2 inline-flex h-9 w-9 items-center justify-center rounded text-madec-primary;
+    background: color-mix(in srgb, white 60%, var(--madec-primary-tint));
+    box-shadow: 0 1px 2px rgba(81, 86, 190, 0.12);
+  }
+
+  .section-title {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-madec-muted;
+  }
+
+  /* ── Cards & surfaces (Minia: border gray-200 + soft shadow) ────────────── */
+  .card {
+    @apply bg-white p-5;
+    border-radius: var(--madec-radius);
+    border: 1px solid var(--madec-border);
+    box-shadow: var(--madec-card-shadow);
+  }
+
+  .card-hover {
+    @apply card transition-shadow;
+  }
+
+  .card-hover:hover {
+    box-shadow: rgba(116, 120, 141, 0.18) 0px 10px 26px -6px;
+  }
+
+  .page-content {
+    @apply space-y-5 p-5 md:p-6;
+  }
+
+  /* ── Badges (Minia soft badges) ──────────────────────────────────────────── */
+  .badge {
+    @apply inline-flex items-center rounded px-2 py-0.5 text-xs font-medium;
+  }
+
+  .badge-primary {
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-primary);
+    border-radius: var(--madec-radius);
+    padding: 0.1875rem 0.8125rem;
+  }
+
+  .badge-tag {
+    background-color: var(--madec-primary);
+    color: white;
+    border-radius: 0 4px 4px 0;
+    padding: 0.1875rem 0.5rem;
+  }
+
+  .badge-promo {
+    background-color: var(--madec-promo);
+    color: var(--madec-danger);
+    border-radius: var(--madec-radius);
+  }
+
+  .badge-success {
+    background-color: var(--madec-success-tint);
+    color: var(--madec-success);
+    border-radius: var(--madec-radius);
+  }
+
+  .badge-danger {
+    background-color: var(--madec-danger-tint);
+    color: var(--madec-danger);
+    border-radius: var(--madec-radius);
+  }
+
+  .badge-neutral {
+    background-color: var(--surface);
+    color: var(--madec-text-secondary);
+    border-radius: var(--madec-radius);
+  }
+
+  /* ── Status badges (orders, users, pipeline) — Minia soft palette ────────── */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--madec-radius);
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    line-height: 1rem;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .status-badge--pending {
+    background-color: var(--madec-warning-tint);
+    color: #997332;
+  }
+
+  .status-badge--validated {
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-primary);
+  }
+
+  .status-badge--processing {
+    background-color: var(--madec-selected-tint);
+    color: var(--madec-primary);
+  }
+
+  .status-badge--ready {
+    background-color: var(--madec-info-tint);
+    color: #2d6490;
+  }
+
+  .status-badge--delivered {
+    background-color: var(--madec-success-tint);
+    color: #1d7f57;
+  }
+
+  .status-badge--cancelled {
+    background-color: var(--madec-danger-tint);
+    color: #d0413e;
+  }
+
+  .status-badge--active {
+    background-color: var(--madec-success-tint);
+    color: #1d7f57;
+  }
+
+  .status-badge--inactive {
+    background-color: var(--surface);
+    color: var(--madec-text-muted);
+  }
+
+  .status-badge--neutral {
+    background-color: var(--surface);
+    color: var(--madec-text-secondary);
+  }
+
+  /* ── Tables (Minia) ──────────────────────────────────────────────────────── */
+  .data-table {
+    @apply w-full overflow-hidden bg-white;
+    border-radius: var(--madec-radius);
+    border: 1px solid var(--madec-border);
+    box-shadow: var(--madec-card-shadow);
+  }
+
+  .data-table thead {
+    @apply border-b text-left text-xs font-semibold uppercase;
+    border-color: var(--madec-border);
+    background-color: var(--surface);
+    color: var(--madec-text-secondary);
+  }
+
+  .data-table th {
+    @apply px-4 py-2.5;
+  }
+
+  .data-table td {
+    @apply border-t px-4 py-2.5 text-sm;
+    border-color: var(--madec-border);
+  }
+
+  .data-table tbody tr {
+    @apply transition-colors;
+  }
+
+  .data-table tbody tr:hover {
+    background-color: var(--madec-active-tint);
+  }
+
+  /* ── Navigation tabs ───────────────────────────────────────────────────────── */
+  .tab {
+    @apply rounded px-3 py-2 text-sm font-medium transition-colors;
+    color: var(--madec-text-secondary);
+  }
+
+  .tab:hover {
+    background-color: var(--madec-active-tint);
+    color: var(--madec-primary);
+  }
+
+  .tab-active {
+    background-color: var(--madec-primary);
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .nav-link {
+    @apply flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors;
+    color: var(--madec-sidebar-item);
+  }
+
+  .nav-link:hover {
+    color: var(--madec-sidebar-item-active);
+  }
+
+  .nav-link-active {
+    color: var(--madec-sidebar-item-active);
+    font-weight: 600;
+  }
+
+  /* ── Chips & links ─────────────────────────────────────────────────────────── */
+  .filter-chip {
+    @apply rounded border bg-white px-3 py-1.5 text-sm transition-colors;
+    border-color: var(--madec-border);
+    color: var(--madec-text-muted);
+  }
+
+  .filter-chip:hover {
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-primary);
+  }
+
+  .filter-chip-active {
+    @apply border-transparent text-white;
+    background-color: var(--madec-primary);
+  }
+
+  .filter-chip-active:hover {
+    background-color: #4549a2;
+  }
+
+  .link-brand {
+    @apply font-medium text-madec-primary hover:text-primary-600 hover:underline;
+  }
+
+  /* ── Empty & info states ───────────────────────────────────────────────────── */
+  .empty-state {
+    @apply flex flex-col items-center justify-center bg-white px-6 py-12 text-center;
+    border-radius: var(--madec-radius);
+    border: 1px solid var(--madec-border);
+    box-shadow: var(--madec-card-shadow);
+  }
+
+  .empty-state-icon {
+    @apply mb-3 flex h-12 w-12 items-center justify-center;
+    border-radius: 9999px;
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-primary);
+  }
+
+  .empty-state-title {
+    @apply text-base font-semibold text-madec-text;
+  }
+
+  .empty-state-desc {
+    @apply mt-1 max-w-sm text-sm text-madec-muted;
+  }
+
+  .info-note {
+    @apply px-4 py-3 text-sm;
+    border-radius: var(--madec-radius);
+    border: 1px solid var(--madec-selected-tint);
+    background-color: var(--madec-primary-tint);
+    color: var(--madec-text-secondary);
+  }
+
+  /* ── MADEC gradient card (solde) ─────────────────────────────────────────── */
+  .madec-gradient-card {
+    background: linear-gradient(312deg, var(--madec-primary-light), var(--madec-primary));
+    border-radius: var(--madec-radius-lg);
+    border: none;
+    box-shadow: var(--madec-card-shadow);
+  }
+
+  .pipeline span {
+    padding: 0.1875rem 0.8125rem;
+    font-size: 12px;
+  }
+
+  /* ── Product catalog ─────────────────────────────────────────────────────── */
+  .product-card {
+    @apply bg-white;
+    border-radius: var(--madec-radius);
+    border: 1px solid var(--madec-border);
+    box-shadow: var(--madec-card-shadow);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+
+  .product-card:hover {
+    border-color: #d5d5e0;
+    box-shadow: rgba(116, 120, 141, 0.22) 0px 10px 26px -6px;
+  }
+
+  .product-card-image {
+    height: 11rem;
+    background-color: var(--surface);
+    object-fit: contain;
+  }
+
+  .product-card-cart-btn {
+    @apply flex shrink-0 items-center justify-center transition-colors;
+    padding: 0.5rem 1rem;
+    border-radius: var(--madec-radius);
+    background-color: var(--madec-primary-tint);
+  }
+
+  .product-card-cart-btn:hover:not(:disabled) {
+    background-color: var(--madec-selected-tint);
+  }
+
+  .product-card-cart-btn:disabled {
+    @apply cursor-not-allowed opacity-50;
+  }
+
+  .catalog-toolbar {
+    @apply card space-y-4 !p-4 md:!p-5;
+  }
+
+  /* ── Minia topbar (#page-topbar / .navbar-header) ───────────────────────── */
+  .app-topbar {
+    @apply sticky top-0 z-30 shrink-0;
+    background: #ffffff;
+    border-bottom: 1px solid var(--madec-border);
+  }
+
+  .navbar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--madec-header-height);
+    padding: 0 1.5rem 0 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .navbar-header-start,
+  .navbar-header-end {
+    display: flex;
+    align-items: center;
+    min-height: var(--madec-header-height);
+  }
+
+  .navbar-header-end {
+    gap: 0;
+  }
+
+  /* Minia .header-item — full header height, borderless */
+  .header-item {
+    @apply relative inline-flex items-center justify-center border-0 bg-transparent transition-colors;
+    height: var(--madec-header-height);
+    min-width: 2.75rem;
+    padding: 0 0.85rem;
+    color: var(--madec-text-secondary);
+    box-shadow: none !important;
+    border-radius: 0;
+  }
+
+  .header-item:hover {
+    color: var(--madec-text);
+    background-color: var(--surface);
+  }
+
+  .header-item--menu {
+    font-size: 16px;
+  }
+
+  .header-item--user {
+    gap: 0.4rem;
+    padding-left: 0.75rem;
+    padding-right: 0.85rem;
+    background-color: #f8f9fa;
+    border-left: 1px solid var(--madec-border);
+    border-right: 1px solid var(--madec-border);
+  }
+
+  .header-item--user:hover {
+    background-color: var(--madec-active-tint);
+  }
+
+  .header-profile-user {
+    @apply flex shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white;
+    height: 36px;
+    width: 36px;
+    background-color: var(--madec-primary);
+    padding: 3px;
+    box-sizing: border-box;
+  }
+
+  .header-profile-user--gestionnaire {
+    background-color: var(--madec-success);
+  }
+
+  .header-user-name {
+    @apply max-w-[9rem] truncate text-sm font-medium text-madec-text;
+  }
+
+  .noti-icon .noti-badge {
+    position: absolute;
+    top: 14px;
+    right: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1rem;
+    height: 1rem;
+    padding: 0 0.25rem;
+    border-radius: 999px;
+    background-color: var(--madec-danger);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* Minia .app-search */
+  .app-search {
+    padding: calc((var(--madec-header-height) - 40px) / 2) 0;
+    margin-left: 0.25rem;
+  }
+
+  .app-search-inner,
+  .app-search-mobile {
+    position: relative;
+  }
+
+  .app-search-input {
+    height: 40px;
+    width: 240px;
+    max-width: 100%;
+    padding: 0.45rem 3rem 0.45rem 1rem;
+    border: 1px solid var(--madec-border);
+    border-radius: var(--madec-radius);
+    background-color: #f8f9fa;
+    color: var(--madec-text);
+    font-size: 0.875rem;
+    box-shadow: none;
+    outline: none;
+  }
+
+  .app-search-input:focus {
+    border-color: var(--madec-primary);
+    background-color: #fff;
+  }
+
+  .app-search-input::placeholder {
+    color: var(--madec-placeholder);
+  }
+
+  .app-search-btn {
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    height: 34px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: var(--madec-radius);
+    background-color: var(--madec-primary);
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .app-search-btn:hover {
+    background-color: var(--madec-primary-mid);
+  }
+
+  .app-search-mobile {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1rem 0.85rem;
+    border-top: 1px solid var(--madec-border);
+    background: #fff;
+  }
+
+  .app-search-mobile .app-search-input {
+    width: 100%;
+  }
+
+  .topbar-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% - 4px);
+    z-index: 50;
+    min-width: 11.5rem;
+    padding: 0.35rem 0;
+    border-radius: var(--madec-radius);
+    border: 1px solid var(--madec-border);
+    background: #fff;
+    box-shadow: var(--madec-card-shadow);
+  }
+
+  .topbar-dropdown-item {
+    @apply flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-madec-secondary transition-colors;
+  }
+
+  .topbar-dropdown-item:hover {
+    background-color: var(--madec-active-tint);
+    color: var(--madec-primary);
+  }
+
+  .topbar-dropdown-item--danger:hover {
+    color: var(--madec-danger);
+    background-color: var(--madec-danger-tint);
+  }
+
+  .topbar-dropdown-divider {
+    height: 1px;
+    margin: 0.25rem 0;
+    background: var(--madec-border);
+  }
+
+  /* legacy aliases kept for any remaining class refs */
+  .app-topbar-accent {
+    display: none;
+  }
+
+  .topbar-page-title {
+    @apply truncate text-sm font-semibold uppercase tracking-wide text-madec-text;
+  }
+
+  .topbar-page-sub {
+    @apply truncate text-xs normal-case tracking-normal text-madec-muted;
+  }
+
+  .topbar-icon-btn {
+    @apply relative inline-flex h-10 w-10 items-center justify-center rounded-full border-0 transition-colors;
+    background-color: transparent;
+    color: var(--madec-text-secondary);
+  }
+
+  .topbar-icon-btn:hover {
+    background-color: var(--surface);
+    color: var(--madec-text);
+  }
+
+  .topbar-icon-btn--alert {
+    color: var(--madec-danger);
+  }
+
+  .topbar-user {
+    @apply flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2 transition-colors;
+  }
+
+  .topbar-avatar {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold;
+    background-color: var(--madec-primary);
+    color: white;
+  }
+
+  .topbar-avatar--gestionnaire {
+    background-color: var(--madec-success);
+  }
+
+  .sidebar-logo {
+    width: 150px;
+    height: auto;
+    max-width: none;
+    object-fit: cover;
+    object-position: left center;
+  }
+
+  .auth-logo {
+    width: 64%;
+    height: auto;
+    max-width: none;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  /* ── Minia sidebar (light #fbfaff, 250px, border-right) ──────────────────── */
+  .app-sidebar {
+    background-color: var(--madec-sidebar-bg);
+    border-right: 1px solid var(--madec-border);
+  }
+
+  .sidebar-section-title {
+    @apply px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wider;
+    color: var(--madec-text-muted);
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 rounded px-3 py-2 text-sm font-medium transition-colors;
+    color: var(--madec-sidebar-item);
+  }
+
+  .sidebar-link:hover {
+    color: var(--madec-sidebar-item-active);
+  }
+
+  .sidebar-link .sidebar-link-icon {
+    color: #7b7fa5;
+    transition: color 0.15s ease;
+  }
+
+  .sidebar-link:hover .sidebar-link-icon {
+    color: var(--madec-sidebar-item-active);
+  }
+
+  .sidebar-link--active {
+    color: var(--madec-sidebar-item-active);
+    background-color: var(--madec-primary-tint);
+    font-weight: 600;
+  }
+
+  .sidebar-link--active .sidebar-link-icon {
+    color: var(--madec-sidebar-item-active);
+  }
+
+  /* ── Toasts (Minia-style alerts, centered) ───────────────────────────────── */
+  .madec-toast {
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif !important;
+  }
+
+  .madec-toast > div {
+    font-size: 15px !important;
+    font-weight: 500 !important;
+  }
+
+  /* ── Dashboard KPI digits ────────────────────────────────────────────────── */
+  .stat-value-animate {
+    display: inline-block;
+    animation: madec-stat-in 0.55s ease-out both;
+  }
+
+  .card--stat {
+    overflow: hidden;
+  }
+
+  @keyframes madec-stat-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .stat-value-animate {
+      animation: none;
+    }
+  }
+}

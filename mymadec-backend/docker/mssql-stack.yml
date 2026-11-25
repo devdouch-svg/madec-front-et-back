@@ -1,0 +1,55 @@
+# Production SQL Server stack — run on the VPS BEFORE the backend API.
+#
+#   cd /root/my-madec-mssql   (or copy this file there)
+#   docker compose -f mssql-stack.yml up -d
+#
+# Creates network "madec-net" and service hostname "mssql" for the backend API.
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "${SA_PASSWORD:?Set SA_PASSWORD in .env}"
+      MSSQL_SA_PASSWORD: "${SA_PASSWORD}"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      madec-net:
+        aliases:
+          - mssql
+    healthcheck:
+      test: >
+        /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa
+        -P "$${SA_PASSWORD}" -Q "SELECT 1" -C -No
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      SA_PASSWORD: "${SA_PASSWORD}"
+    networks:
+      - madec-net
+    entrypoint: >
+      /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$${SA_PASSWORD}" -C -No
+      -Q "IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = N'mymadec') CREATE DATABASE mymadec;"
+    restart: "no"
+
+networks:
+  madec-net:
+    name: madec-net
+    driver: bridge
+
+volumes:
+  mssql_data:

@@ -1,0 +1,48 @@
+# Secrets & credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+certs/
+firebase-credentials.json
+*-firebase-adminsdk-*.json
+google-services*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+*.db
+uploads/
+
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Logs & OS
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Local docs / exports (not source)
+exports/
+exports.rar
+*.xlsx
+*.docx
+*.rar
+Untitled
+
+# Local tooling
+.tools/

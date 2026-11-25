@@ -1,0 +1,122 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────────
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── 2. Write SSH key ──────────────────────────────────────────────────────
+      - name: Write SSH key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      # ── 3. Build on CI runner (avoids RAM pressure on the VPS) ───────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: VITE_API_URL=/api/v1 npm run build
+
+      # ── 4. Setup server — nginx (idempotent) ──────────────────────────────────
+      - name: Setup server
+        env:
+          DEPLOY_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "$DEPLOY_USER@$DEPLOY_HOST" bash -s << 'ENDSSH'
+            set -e
+
+            if ! command -v nginx &>/dev/null; then
+              apt-get install -y nginx
+            fi
+
+            cp /root/my-madec/frontend/nginx/mymadec.conf \
+               /etc/nginx/sites-available/mymadec
+            ln -sf /etc/nginx/sites-available/mymadec \
+                   /etc/nginx/sites-enabled/mymadec
+            rm -f /etc/nginx/sites-enabled/default
+            systemctl enable nginx
+            nginx -t && systemctl reload nginx
+          ENDSSH
+
+      # ── 5. Upload built dist to server and swap ───────────────────────────────
+      - name: Deploy dist to server
+        env:
+          DEPLOY_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p /root/my-madec/frontend/nginx"
+
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            nginx/mymadec.conf \
+            "$DEPLOY_USER@$DEPLOY_HOST:/root/my-madec/frontend/nginx/mymadec.conf"
+
+          # Upload dist as a tarball (pipe stdin separately from the remote script)
+          tar -czf dist.tar.gz dist
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            dist.tar.gz \
+            "$DEPLOY_USER@$DEPLOY_HOST:/root/my-madec/frontend/dist.tar.gz"
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "$DEPLOY_USER@$DEPLOY_HOST" "
+              set -e
+              cd /root/my-madec/frontend
+              tar -xzf dist.tar.gz
+              rm -f dist.tar.gz
+              # v2 (base /) → /var/www/html (app principale à la racine)
+              mkdir -p /var/www/html
+              rm -rf /var/www/html/*
+              cp -r dist/* /var/www/html/
+              cp nginx/mymadec.conf /etc/nginx/sites-available/mymadec
+              ln -sf /etc/nginx/sites-available/mymadec /etc/nginx/sites-enabled/mymadec
+              nginx -t && systemctl reload nginx
+              echo '✅ Frontend v2 deployed to /var/www/html'
+              ls -la /var/www/html/assets | head -15
+            "
+
+      # ── 6. Verify ─────────────────────────────────────────────────────────────
+      - name: Verify
+        run: |
+          sleep 3
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "http://${{ secrets.VPS_HOST }}:8034/")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Frontend v2 not reachable (HTTP $STATUS)"
+            exit 1
+          fi
+          JS_URL=$(curl -s "http://${{ secrets.VPS_HOST }}:8034/" | grep -oE '/assets/index-[^"]+\.js' | head -1)
+          CT=$(curl -sI "http://${{ secrets.VPS_HOST }}:8034${JS_URL}" | tr -d '\r' | awk -F': ' 'tolower($1)=="content-type"{print tolower($2); exit}')
+          echo "JS ${JS_URL} → Content-Type: ${CT}"
+          case "$CT" in
+            *javascript*|*ecmascript*)
+              echo "✅ Frontend v2 live at http://${{ secrets.VPS_HOST }}:8034/"
+              ;;
+            *)
+              echo "❌ JS served as HTML (blank page). Check /var/www/html/assets"
+              exit 1
+              ;;
+          esac

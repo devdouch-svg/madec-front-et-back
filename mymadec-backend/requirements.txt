@@ -1,0 +1,37 @@
+# Requires Python 3.11 or 3.12 (not 3.14). Pinned pydantic-core has no 3.14 wheel.
+# Windows:  py -3.12 -m venv .venv   then   .\.venv\Scripts\Activate.ps1
+# Or run:   .\setup.ps1
+
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9        # required for UploadFile / Form in FastAPI
+
+# ── Database ───────────────────────────────────────────────────────────────────
+sqlalchemy==2.0.31
+alembic==1.13.2
+pyodbc>=5.1.0                  # >=5.1.0 so pip picks the wheel built for Python 3.13
+
+# ── Auth / security ───────────────────────────────────────────────────────────
+python-jose[cryptography]==3.3.0
+bcrypt>=4.0.0                  # passlib 1.7.4 is broken with bcrypt 4.x — use bcrypt directly
+
+# ── Config / env ──────────────────────────────────────────────────────────────
+pydantic==2.8.2
+pydantic-settings==2.3.4
+
+# ── Rate limiting ─────────────────────────────────────────────────────────────
+slowapi==0.1.9                 # limiter instance attached to app.state in main.py
+redis==5.0.8                   # shared rate-limit storage (multi-worker) via limits/RedisStorage
+openpyxl==3.1.5                # Excel (.xlsx) export (orders)
+reportlab==5.0.0               # PDF export (orders)
+
+# ── Firebase (FCM push notifications) ─────────────────────────────────────────
+firebase-admin==6.5.0          # lazy-imported in services/notification.py
+
+# ── HTTP client ───────────────────────────────────────────────────────────────
+httpx==0.27.0                  # TestClient + any internal HTTP calls
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest==8.2.2
+pytest-asyncio==0.23.7

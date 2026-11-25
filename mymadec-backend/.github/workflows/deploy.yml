@@ -1,0 +1,205 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write SSH key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+      - name: Generate .env
+        env:
+          APP_SECRET_KEY:            ${{ secrets.APP_SECRET_KEY }}
+          DEPLOY_HOST:               ${{ secrets.VPS_HOST }}
+          DB_PASSWORD:               ${{ secrets.DB_PASSWORD }}
+          ADMIN_EMAIL:               ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_INITIAL_PASSWORD:    ${{ secrets.ADMIN_INITIAL_PASSWORD }}
+          SMTP_HOST:                 ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:                 ${{ secrets.SMTP_PORT }}
+          SMTP_USER:                 ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:             ${{ secrets.SMTP_PASSWORD }}
+          SMTP_FROM_NAME:            ${{ secrets.SMTP_FROM_NAME }}
+          SMTP_TLS:                  ${{ secrets.SMTP_TLS }}
+          DISABLE_EMAIL:             ${{ secrets.DISABLE_EMAIL }}
+          DEBUG:                     ${{ secrets.DEBUG }}
+          ENABLE_DOCS:               ${{ secrets.ENABLE_DOCS }}
+          STARTUP_TEST_EMAIL:        ${{ secrets.STARTUP_TEST_EMAIL }}
+          ETL_SERVICE_TOKEN:         ${{ secrets.ETL_SERVICE_TOKEN }}
+          FIREBASE_CREDENTIALS_JSON: ${{ secrets.FIREBASE_CREDENTIALS_JSON }}
+        run: |
+          {
+            echo "APP_ENV=staging"
+            printf 'DEBUG=%s\n' "${DEBUG:-false}"
+            printf 'ENABLE_DOCS=%s\n' "${ENABLE_DOCS:-true}"
+            echo "LOG_TO_FILE=false"
+            echo "UVICORN_WORKERS=2"
+            printf 'SECRET_KEY=%s\n' "$APP_SECRET_KEY"
+            printf 'ALLOWED_ORIGINS=http://%s:8034\n' "$DEPLOY_HOST"
+            printf 'FRONTEND_BASE_URL=http://%s:8034\n' "$DEPLOY_HOST"
+            echo "SEED_DEMO=false"
+            echo "RESET_MADEC_CATALOG=false"
+
+            echo "DB_HOST=mssql"
+            echo "DB_PORT=1433"
+            echo "DB_NAME=mymadec"
+            echo "DB_USER=sa"
+            printf 'DB_PASSWORD=%s\n' "$DB_PASSWORD"
+            echo "DB_DRIVER=ODBC Driver 18 for SQL Server"
+            echo "MSSQL_DOCKER_NETWORK=my-madec-mssql_default"
+
+            printf 'ADMIN_EMAIL=%s\n' "${ADMIN_EMAIL:-admin@mymadec.com}"
+            if [ -n "$ADMIN_INITIAL_PASSWORD" ]; then
+              printf 'ADMIN_INITIAL_PASSWORD=%s\n' "$ADMIN_INITIAL_PASSWORD"
+            fi
+
+            # ── SMTP (one GitHub secret per field — Gmail-friendly defaults) ───
+            printf 'SMTP_HOST=%s\n'     "${SMTP_HOST:-smtp.gmail.com}"
+            printf 'SMTP_PORT=%s\n'     "${SMTP_PORT:-587}"
+            printf 'SMTP_USER=%s\n'     "$SMTP_USER"
+            printf 'SMTP_PASSWORD=%s\n' "$SMTP_PASSWORD"
+            printf 'SMTP_FROM_NAME=%s\n' "${SMTP_FROM_NAME:-My Madec}"
+            printf 'SMTP_TLS=%s\n'      "${SMTP_TLS:-true}"
+            if [ -n "$DISABLE_EMAIL" ]; then
+              printf 'DISABLE_EMAIL=%s\n' "$DISABLE_EMAIL"
+            elif [ -n "$SMTP_USER" ] && [ -n "$SMTP_PASSWORD" ]; then
+              echo "DISABLE_EMAIL=false"
+            else
+              echo "DISABLE_EMAIL=true"
+            fi
+            if [ -n "$STARTUP_TEST_EMAIL" ]; then
+              printf 'STARTUP_TEST_EMAIL=%s\n' "$STARTUP_TEST_EMAIL"
+            fi
+
+            if [ -n "$ETL_SERVICE_TOKEN" ]; then
+              printf 'ETL_SERVICE_TOKEN=%s\n' "$ETL_SERVICE_TOKEN"
+            fi
+
+            if [ -n "$FIREBASE_CREDENTIALS_JSON" ]; then
+              printf 'FIREBASE_CREDENTIALS_JSON=%s\n' "$FIREBASE_CREDENTIALS_JSON"
+            fi
+          } > backend.env
+
+      - name: Copy to server
+        env:
+          DEPLOY_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          SSH_OPTS="-i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=15"
+
+          retry_ssh() {
+            local attempt
+            for attempt in 1 2 3 4 5; do
+              echo "SSH attempt $attempt/5..."
+              if "$@"; then
+                return 0
+              fi
+              echo "SSH failed, retrying in 20s..."
+              sleep 20
+            done
+            echo "SSH failed after 5 attempts"
+            return 1
+          }
+
+          retry_ssh ssh $SSH_OPTS \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p /root/my-madec/backend"
+
+          tar --exclude='.git' \
+              --exclude='__pycache__' \
+              --exclude='*.pyc' \
+              --exclude='.env' \
+              -czf - . | \
+          retry_ssh ssh $SSH_OPTS \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "tar -xzf - -C /root/my-madec/backend"
+
+          retry_ssh scp $SSH_OPTS \
+            backend.env \
+            "$DEPLOY_USER@$DEPLOY_HOST:/root/my-madec/backend/.env"
+
+      - name: Deploy
+        env:
+          DEPLOY_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          SSH_OPTS="-i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=15"
+
+          for attempt in 1 2 3 4 5; do
+            echo "Deploy SSH attempt $attempt/5..."
+            if ssh $SSH_OPTS "$DEPLOY_USER@$DEPLOY_HOST" bash -s << 'ENDSSH'
+              set -e
+              cd /root/my-madec/backend
+
+              docker network create madec-net 2>/dev/null || true
+              MSSQL_CTN=$(docker ps --format '{{.Names}}' | grep -E 'mssql' | head -1 || true)
+              if [ -n "$MSSQL_CTN" ]; then
+                docker network connect madec-net "$MSSQL_CTN" 2>/dev/null || true
+              fi
+
+              docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
+
+              echo "==> Running database migrations..."
+              docker compose -f docker-compose.prod.yml exec -T api alembic upgrade head
+              docker compose -f docker-compose.prod.yml exec -T api alembic current
+
+              echo "Waiting for API container..."
+              for i in $(seq 1 24); do
+                if docker compose -f docker-compose.prod.yml exec -T api curl -sf http://localhost:8000/health >/dev/null 2>&1; then
+                  break
+                fi
+                sleep 5
+              done
+
+              docker image prune -f
+
+              echo "✅ Backend deployed"
+          ENDSSH
+            then
+              exit 0
+            fi
+            echo "Deploy SSH failed, retrying in 20s..."
+            sleep 20
+          done
+          echo "Deploy SSH failed after 5 attempts"
+          exit 1
+
+      - name: Health check
+        env:
+          DEPLOY_USER: ${{ secrets.VPS_USER }}
+          DEPLOY_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          echo "Waiting for API to be ready (up to 5 min)..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+              http://$DEPLOY_HOST:8000/health || echo "000")
+            echo "  [$i/30] HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Backend healthy"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "❌ Backend did not respond after 5 minutes"
+          echo "--- Container logs ---"
+          SSH_OPTS="-i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=30"
+          ssh $SSH_OPTS \
+            "$DEPLOY_USER@$DEPLOY_HOST" \
+            "docker logs --tail 80 backend-api-1 2>&1 || \
+             docker compose -f /root/my-madec/backend/docker-compose.prod.yml logs --tail 80"
+          exit 1
